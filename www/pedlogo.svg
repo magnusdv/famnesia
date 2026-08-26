@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1662" height="1229" viewBox="0 0 1662 1229">
+  <style>
+    .connector { fill: none; stroke: #35597B; stroke-width: 13.75; stroke-linejoin: round; }
+    .parent { fill: #E8D7BF; stroke: #C7AA7B; stroke-width: 10.0833; stroke-linejoin: round; }
+    .child { fill: none; stroke: #526F8E; stroke-width: 12.375; stroke-linejoin: round; stroke-dasharray: 49.5 37.125; }
+    .shackle { fill: none; stroke: #3F5F80; stroke-width: 10.5417; stroke-linejoin: round; }
+    .lockbody { fill: #526F8E; stroke: #3F5F80; stroke-width: 5.5; stroke-linejoin: round; }
+    .keyhole { fill: #F8F7F4; }
+  </style>
+
+  <!-- Pedigree connectors -->
+  <path class="connector" d="M711 176H952"/>
+  <path class="connector" d="M832 176V857"/>
+  <path class="connector" d="M189 560H1475"/>
+  <path class="connector" d="M189 561V859"/>
+  <path class="connector" d="M1475 561V860"/>
+
+  <!-- Parents -->
+  <rect class="parent" x="387" y="14" width="324" height="324"/>
+  <circle class="parent" cx="1114.5" cy="167.5" r="162.5"/>
+
+  <!-- Children -->
+  <circle class="child" cx="187.5" cy="1041.5" r="181.5"/>
+  <rect class="child" x="649" y="860" width="364" height="363"/>
+  <circle class="child" cx="1474" cy="1041.5" r="182"/>
+
+  <defs>
+    <g id="lock">
+      <rect class="shackle" x="-52.5" y="-95" width="105" height="109" rx="17.5"/>
+      <rect class="lockbody" x="-79.5" y="-1.67" width="159" height="125" rx="20.83"/>
+      <circle class="keyhole" cx="0.5" cy="27.5" r="18.5"/>
+      <rect class="keyhole" x="-8" y="39" width="17" height="35"/>
+    </g>
+  </defs>
+
+  <!-- Locks -->
+  <use href="#lock" transform="translate(188.5 1041.5)"/>
+  <use href="#lock" transform="translate(832.5 1041.5)"/>
+  <use href="#lock" transform="translate(1475.5 1041.5)"/>
+</svg>

@@ -1,0 +1,195 @@
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0.2rem 0;
+}
+
+
+.app-logo {
+  width: 110px;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.app-title-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.05;
+}
+
+.app-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2f4f73;
+  margin: 0;
+}
+
+.app-subtitle {
+  font-size: 1rem;
+  color: #5f6b77;
+  margin-top: 0.15rem;
+}
+
+:root {
+  --original-bg: #f2e4d3;
+  --masked-bg: #dcebe3;
+}
+
+.modal-header {
+  padding: .75rem 1.25rem;
+  background: var(--bs-tertiary-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.modal-header .modal-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-header.original-heading {
+  background: var(--original-bg);
+}
+
+.card-header.masked-heading {
+  background: var(--masked-bg);
+}
+
+.card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+#statsOriginal,
+#statsMasked {
+  font-size: .85rem;
+  font-weight: 400;
+}
+
+.lr-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  white-space: nowrap;
+}
+
+.lr-total {
+  font-weight: 600;
+}
+
+.lr-change {
+  padding: .3rem .6rem;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lr-close {
+  color: #285c3e;
+  background: #dcefe3;
+}
+
+.lr-medium {
+  color: #805000;
+  background: #f8dfb5;
+}
+
+.lr-large {
+  color: #87383d;
+  background: #f2d0d2;
+}
+
+.sidebar .shiny-input-container > label {
+  font-weight: 600;
+}
+
+.freq-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.freq-title .btn {
+  flex: none;
+  margin-left: auto;
+  padding: .25rem .75rem;
+  font-size: .875rem;
+}
+
+#freqTable {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#freqTable table.dataTable {
+  font-size: .875rem;
+  line-height: 1.25;
+}
+
+#freqTable table.dataTable > :not(caption) > * > * {
+  padding: .3rem .45rem;
+}
+
+#freqTable .freq-group {
+  padding: .4rem;
+  text-align: center;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--bs-body-color);
+  background: var(--original-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+#freqTable .freq-group.masked {
+  background: var(--masked-bg);
+}
+
+#freqTable th.masked,
+#freqTable tbody td:nth-child(3) {
+  border-left: 1px solid #ddd;
+}
+
+.file-actions {
+  display: flex;
+  gap: .5rem;
+  margin-top: -.75rem;
+}
+
+.file-actions .btn {
+  flex: 1;
+  min-width: 0;
+}
+
+#fileInput-label + .input-group .btn-file,
+#fileInput-label + .input-group .form-control {
+  padding: .25rem .5rem;
+  font-size: .875rem;
+}
+
+#fileInput_progress {
+  height: .4rem;
+}
+
+#fileInput_progress .progress-bar {
+  font-size: 0;
+}
+
+#tableOriginal table.dataTable,
+#tableMasked table.dataTable {
+  font-size: .875rem;
+  line-height: 1.25;
+}
+
+#tableOriginal table.dataTable > :not(caption) > * > *,
+#tableMasked table.dataTable > :not(caption) > * > * {
+  padding: .3rem .4rem;
+}
