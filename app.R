@@ -150,7 +150,7 @@ server = function(input, output, session) {
       if((x$params$theta %||% 0) > 0)
         showNotification("Note: theta ignored in LR calculations", duration = 5)
       }, error = function(e) {
-        showNotification(conditionMessage(e), type = "error", duration = NULL)
+        showNotification(conditionMessage(e), type = "error", duration = 5)
     })
   }
   
@@ -215,7 +215,7 @@ server = function(input, output, session) {
       )
       masked(mdat)
     }, error = function(e) {
-      showNotification(conditionMessage(e), type = "error", duration = NULL)
+      showNotification(conditionMessage(e), type = "error", duration = 5)
     })
   })
 
