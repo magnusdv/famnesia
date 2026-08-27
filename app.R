@@ -250,6 +250,10 @@ server = function(input, output, session) {
   output$lrMasked = renderUI({
     lr0 = prod(req(original())$lr)
     lr = prod(req(masked())$lr)
+    
+    if(is.na(lr0) || is.na(lr)) 
+      return(tags$span(class = "lr-total", paste("LR =", sprintf("%.3g", lr))))
+    
     dev = 100 * (lr / lr0 - 1)
     cls = if(abs(dev) < 1) "lr-close" else if(abs(dev) < 5) "lr-medium" else "lr-large"
 
