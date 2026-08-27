@@ -104,8 +104,49 @@
   background: #f2d0d2;
 }
 
+.sidebar .shiny-input-container {
+  margin-bottom: 0;
+}
+
 .sidebar .shiny-input-container > label {
+  margin-bottom: .3rem;
   font-weight: 600;
+}
+
+.sidebar .shiny-options-group > div {
+  min-height: 0;
+  margin: 0 0 .3rem;
+  padding: 0;
+}
+
+.sidebar .shiny-options-group label {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin: 0;
+  font-size: .85rem;
+  line-height: 1.05;
+}
+
+.sidebar .shiny-options-group input {
+  flex: none;
+  width: .95rem;
+  height: .95rem;
+  margin: 0;
+}
+
+.file-input-wrap .input-group .btn-file,
+.file-input-wrap .input-group .form-control {
+  padding: .25rem .5rem;
+  font-size: .875rem;
+}
+
+#fileInput_progress {
+  height: .4rem;
+}
+
+#fileInput_progress .progress-bar {
+  font-size: 0;
 }
 
 .freq-title {
@@ -156,31 +197,6 @@
 #freqTable th.masked,
 #freqTable tbody td:nth-child(3) {
   border-left: 1px solid #ddd;
-}
-
-.file-actions {
-  display: flex;
-  gap: .5rem;
-  margin-top: -.75rem;
-}
-
-.file-actions .btn {
-  flex: 1;
-  min-width: 0;
-}
-
-#fileInput-label + .input-group .btn-file,
-#fileInput-label + .input-group .form-control {
-  padding: .25rem .5rem;
-  font-size: .875rem;
-}
-
-#fileInput_progress {
-  height: .4rem;
-}
-
-#fileInput_progress .progress-bar {
-  font-size: 0;
 }
 
 #tableOriginal table.dataTable,

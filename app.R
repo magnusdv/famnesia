@@ -22,7 +22,6 @@ ui = page_sidebar(
       div(class = "app-subtitle", "Anonymising Familias files")
     )
   ),
-  #theme = bs_theme(version = 5, primary = "#3f7f80", navbar_bg = "#eee8df"),
   theme = bs_theme(version = 5, primary = "#526f8e", navbar_bg = "#e7e5e1"),
   fillable = FALSE,
 
@@ -30,18 +29,34 @@ ui = page_sidebar(
     width = 260,
     open = "always",
     resizable = FALSE,
-    gap = "1.5rem",
+    gap = "1rem",
     bg = "#f8f7f4",
 
-
-    fileInput("fileInput", "Familias .fam file", buttonLabel = icon("folder-open"), accept = ".fam"),
     div(
-      class = "file-actions",
-      actionButton("example", "Example",
-                   class = "btn-sm btn-outline-secondary"),
-      actionButton("settings", "Settings", icon = icon("gear"),
-                   class = "btn-sm btn-outline-secondary")
+      class = "file-input-wrap",
+      div(
+        class = "d-flex align-items-center justify-content-between fw-semibold",
+        span("Familias file"),
+        actionLink("example", NULL, icon = icon("flask"),
+                   class = "text-secondary px-1 lh-1", title = "Load example")
+      ),
+      fileInput("fileInput", NULL, buttonLabel = icon("folder-open"),
+                accept = ".fam")
     ),
+    div(
+      #div(class = "small fw-semibold text-secondary mb-1", "Presets"),
+      div(
+        class = "d-flex align-items-center gap-2",
+        actionButton("presetStrong", "Strong",
+                     class = "btn-sm btn-outline-primary flex-fill"),
+        actionButton("presetWeak", "Preserve LR",
+                     class = "btn-sm btn-outline-primary flex-fill text-nowrap"),
+        actionLink("settings", NULL, icon = icon("gear"),
+                   class = "text-secondary px-1 lh-1", title = "Settings")
+      )
+    ),
+
+
     checkboxGroupInput(
       "options", "Masking options",
       choiceNames = list(
@@ -56,10 +71,11 @@ ui = page_sidebar(
     ),
     radioButtons("alleles", "Allele labels",
       choiceNames = list(
-        "1,2,3,..." |> addTip("Rename alleles randomly to 1,2,..."),
-        "Constrained" |> addTip("Rename, but preserve order and decimal groups")
+        "Original" |> addTip("Keep original allele labels"),
+        "Constrained" |> addTip("Rename, but preserve order and decimal groups"),
+        "1,2,3,..." |> addTip("Rename alleles randomly to 1,2,...")
       ),
-      choiceValues = c("strong", "constrained")
+      choiceValues = c("original", "constrained", "strong")
     ),
     radioButtons("freqs", "Frequencies",
       choiceNames = list(
@@ -78,10 +94,11 @@ ui = page_sidebar(
       choiceValues = c("original", "simplify", "disable")
     ),
     div(
-      class = "d-flex gap-2",
-      actionButton("apply", "Apply", class = "btn-sm btn-primary flex-fill"),
+      class = "d-flex gap-1",
+      actionButton("apply", "Apply", icon = icon("wand-magic-sparkles"),
+                   class = "btn-primary flex-fill text-nowrap px-2"),
       downloadButton("download", "Download",
-                     class = "btn-sm btn-outline-secondary flex-fill text-nowrap")
+                     class = "btn-outline-secondary flex-fill text-nowrap px-2")
     )
   ),
 
@@ -139,6 +156,24 @@ server = function(input, output, session) {
   observeEvent(input$fileInput, importFam(req(input$fileInput$datapath)))
   observeEvent(input$example, importFam("data/sibship.fam"))
 
+
+  # Option presets ------------------------------------------------------------------------------
+
+  observeEvent(input$presetStrong, {
+    updateCheckboxGroupInput(session, "options",
+      selected = c("famnames", "ids", "markernames", "lump", "sex"))
+    updateRadioButtons(session, "alleles", selected = "strong")
+    updateRadioButtons(session, "freqs", selected = "tweak")
+    updateRadioButtons(session, "mutmodels", selected = "disable")
+  })
+  
+  observeEvent(input$presetWeak, {
+    updateCheckboxGroupInput(session, "options",
+      selected = c("famnames", "ids", "markernames"))
+    updateRadioButtons(session, "alleles", selected = "constrained")
+    updateRadioButtons(session, "freqs", selected = "original")
+    updateRadioButtons(session, "mutmodels", selected = "original")
+  })
 
   # Apply masking -------------------------------------------------------------------------------
   
@@ -208,7 +243,7 @@ server = function(input, output, session) {
   
   output$lrOriginal = renderUI({
     lr = prod(req(original())$lr)
-    tags$span(class = "lr-total",  paste0("LR=", sprintf("%.3g", lr)))
+    tags$span(class = "lr-total",  paste("LR =", sprintf("%.3g", lr)))
   })
 
   output$lrMasked = renderUI({
@@ -219,7 +254,7 @@ server = function(input, output, session) {
 
     tags$span(
       class = "lr-summary",
-      tags$span(class = "lr-total", paste0("LR=", sprintf("%.3g", lr))),
+      tags$span(class = "lr-total", paste("LR =", sprintf("%.3g", lr))),
       tags$span(class = paste("lr-change", cls), sprintf("%+.1f%%", dev))
     )
   })
@@ -294,14 +329,13 @@ server = function(input, output, session) {
     showModal(modalDialog(
       title = tagList(icon("gear"), "Settings"),
       tags$div(
-        class = "border rounded-3 bg-body-tertiary p-3",
-        tags$h6("Data and display", class = "mb-3"),
+        class = "border rounded-3 bg-body-tertiary p-3 text-nowrap",
         checkboxInput(
           "settingRemoveEmpty", "Remove empty markers",
           value = prefs$removeEmpty
         ),
         checkboxInput(
-          "settingAbbreviate", "Abbreviate long names in Original table",
+          "settingAbbreviate", "Abbreviate long names (only in table)",
           value = prefs$abbreviate
         ),
         checkboxInput(
@@ -309,7 +343,7 @@ server = function(input, output, session) {
           value = prefs$noMutLR
         )
       ),
-      size = "s",
+      size = "m",
       easyClose = TRUE,
       footer = modalButton("Close")
     ))
