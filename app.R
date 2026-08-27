@@ -29,7 +29,7 @@ ui = page_sidebar(
     width = 260,
     open = "always",
     resizable = FALSE,
-    gap = "1rem",
+    gap = "0.9rem",
     bg = "#f8f7f4",
 
     div(
@@ -80,10 +80,10 @@ ui = page_sidebar(
     radioButtons("freqs", "Frequencies",
       choiceNames = list(
         "Original" |> addTip("Keep original freqs"),
-        "Tweak"    |> addTip("Perturb up to 2% and renormalize"),
-        "Round"    |> addTip("Round to 4 decimals")
+        "Round"    |> addTip("Round to 4 decimals"),
+        "Tweak"    |> addTip("Perturb up to 2% and renormalize")
       ),
-      choiceValues = c("original", "tweak", "round")
+      choiceValues = c("original", "round", "tweak")
     ),
     radioButtons("mutmodels", "Mutation models",
       choiceNames = list(
