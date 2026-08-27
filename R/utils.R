@@ -149,12 +149,29 @@ renderMarkerTable = function(peds, locusAttributes, lr, lrNoMut = NULL,
   )
 }
 
-plotAllPeds = function(peds) {
+plotAllPeds = function(peds, removeEmpty = TRUE) {
+  if(removeEmpty)
+    peds = removeEmptyComps(peds)
   npeds = length(peds)
   cex = if(npeds == 1) 1.1 else 1.3
   plotPedList(peds, hatched = typedMembers, cex = cex)
 }
 
+removeEmptyComps = function(x) {
+  if(is.null(x)) 
+    return(NULL)
+  for(pedname in names(x)) {
+    ped = x[[pedname]]
+    if(is.ped(ped))
+      next
+    empty = vapply(ped, function(comp) !any(unlist(comp$MARKERS)), FALSE)
+    if(all(empty)) 
+      warning(sprintf("Pedigree '%s' has no typed members", pedname))
+    else x[[pedname]] = ped[!empty]
+  }
+  x
+}
+    
 
 # Frequency table (in modal)
 

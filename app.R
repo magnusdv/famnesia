@@ -130,7 +130,8 @@ ui = page_sidebar(
 server = function(input, output, session) {
   imported = reactiveVal(NULL)
   masked = reactiveVal(NULL)
-  prefs = reactiveValues(removeEmpty = TRUE,
+  prefs = reactiveValues(removeEmptyComps = TRUE,
+                         removeEmptyMarkers = TRUE,
                          abbreviate = TRUE,
                          noMutLR = FALSE)
 
@@ -180,7 +181,7 @@ server = function(input, output, session) {
   # Working version of input: Remove empty markers if indicated
   original = reactive({
     x = req(imported())
-    keep = !prefs$removeEmpty | lengths(x$observed) > 0
+    keep = !prefs$removeEmptyMarkers | lengths(x$observed) > 0
     markers = names(x$attrs)[keep]
 
     if(!all(keep))
@@ -261,11 +262,11 @@ server = function(input, output, session) {
 
   # Pedigree plots
   output$plotOriginal = renderPlot({
-    plotAllPeds(req(original())$peds)
+    plotAllPeds(req(original())$peds, removeEmpty = prefs$removeEmptyComps)
   }, execOnResize = TRUE)
 
   output$plotMasked = renderPlot({
-    plotAllPeds(req(masked())$peds)
+    plotAllPeds(req(masked())$peds, removeEmpty = prefs$removeEmptyComps)
   }, execOnResize = TRUE)
 
 
@@ -331,8 +332,12 @@ server = function(input, output, session) {
       tags$div(
         class = "border rounded-3 bg-body-tertiary p-3 text-nowrap",
         checkboxInput(
-          "settingRemoveEmpty", "Remove empty markers",
-          value = prefs$removeEmpty
+          "settingRemoveEmptyComps", "Remove nonempty components in plots",
+          value = prefs$removeEmptyComps
+        ),
+        checkboxInput(
+          "settingRemoveEmptyMarkers", "Remove empty markers",
+          value = prefs$removeEmptyMarkers
         ),
         checkboxInput(
           "settingAbbreviate", "Abbreviate long names (only in table)",
@@ -349,10 +354,18 @@ server = function(input, output, session) {
     ))
   })
   
-  observeEvent(input$settingRemoveEmpty, {
-    value = input$settingRemoveEmpty
-    if(!identical(value, prefs$removeEmpty)) {
-      prefs$removeEmpty = value
+  observeEvent(input$settingRemoveEmptyComps, {
+    value = input$settingRemoveEmptyComps
+    if(!identical(value, prefs$removeEmptyComps)) {
+      prefs$removeEmptyComps = value
+      masked(NULL)
+    }
+  })
+  
+  observeEvent(input$settingRemoveEmptyMarkers, {
+    value = input$settingRemoveEmptyMarkers
+    if(!identical(value, prefs$removeEmptyMarkers)) {
+      prefs$removeEmptyMarkers = value
       masked(NULL)
     }
   })
