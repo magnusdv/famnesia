@@ -1,5 +1,5 @@
 maskData = function(x, famnames = FALSE, ids = FALSE,
-                    markernames = FALSE, lump = FALSE, sex = FALSE,
+                    markernames = FALSE, shuffle = FALSE, lump = FALSE, sex = FALSE,
                     alleles = c("original", "constrained","strong"),
                     freqs = c("original", "tweak", "round"),
                     mutmodels = c("original", "simplify", "disable")) {
@@ -33,7 +33,12 @@ maskData = function(x, famnames = FALSE, ids = FALSE,
   mnames = names(db) |> setnames()
   
   # Mask: Marker names
-  newMnames = if(markernames) sample(paste0("M", seq_along(mnames))) else mnames
+  newMnames = if(markernames && shuffle) 
+    sample(paste0("M", seq_along(mnames)))
+  else if(markernames) 
+    paste0("M", seq_along(mnames))
+  else 
+    mnames
   names(newMnames) = mnames
   
   # Rebuild mut models

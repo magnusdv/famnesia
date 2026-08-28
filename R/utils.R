@@ -10,8 +10,14 @@ setnames = function(x, nms = x) {
 uniqueAlleles = function(x)
   x[!is.na(x)] |> as.character() |> unique.default()
 
-formatLR = function(z)
-  ifelse(is.na(z), NA_character_, sprintf("%.2f", z))
+formatLR = function(z, digits = 2)
+  ifelse(is.na(z), NA_character_, sprintf(paste0("%.", digits, "f"), z))
+
+LRtag = function(lr, npeds, digits) {
+    fmt = paste0("%.", digits + 1, "g")
+    tags$span("LR", if(npeds > 2) tags$sub("1:2"), " = ", sprintf(fmt, lr),
+              class = "lr-total")
+}
 
 # Truncated allele list for table display
 shortAlleles = function(x, show = 5, maxlen = 20) {
@@ -31,6 +37,8 @@ pedStats = function(x)
 
 addTip = function(label, text)
   tooltip(tags$span(label), text, placement = "right")
+
+
 
 loadFamData = function(path) {
   famfile = tempfile(fileext = ".fam")
@@ -83,78 +91,21 @@ loadFamData = function(path) {
   )
 }
    
-      
-# Marker-wise LRs
-markerLR = function(peds, theta = 0) {
-  lik = do.call(cbind, lapply(peds, pedprobr::likelihood, theta = theta))
-  lr = if(ncol(lik) < 2) rep(NA_real_, nrow(lik)) else lik[, 1] / lik[, 2]
-  setnames(lr, name(peds[[1]]))
-}
-
-renderMarkerTable = function(peds, locusAttributes, lr, lrNoMut = NULL,
-                             referenceLR = NULL, shortNames = FALSE) {
-  markers = names(locusAttributes)
-  attrs = locusAttributes[markers]
-  
-  # Prepare genotype columns
-  p1 = peds[[1]]
-  geno = getGenotypes(p1, typedMembers(p1), markers = markers) |> t.default()
-  
-  if(shortNames) {
-    nm = colnames(geno)
-    shortnm = ifelse(nchar(nm) > 7, paste0(substr(nm, 1, 4), "..."), nm)
-    colnames(geno) = shortnm
-  }
-  
-  # Allele labels: Sort and truncate
-  alleleText = vapply(attrs, function(a) {
-    labs = a$alleles
-    nums = suppressWarnings(as.numeric(labs))
-    labs = if(all(!is.na(nums))) labs[order(nums)] else sort.int(labs)
-    shortAlleles(labs)
-  }, "")
-
-  # Mutation model names
-  mods = vapply(attrs, \(a)
-    if(is.null(a$mutmod)) "-" else getParams(a$mutmod, "model", format = 3)$model, "")
-
-  # Main table
-  x = data.frame(Marker = markers,
-                 N = vapply(attrs, function(a) length(a$alleles), integer(1)),
-                 Alleles = alleleText,
-                 geno,
-                 Mut = mods,
-                 LR = formatLR(lr[markers]),
-                 check.names = FALSE)
-
-  if(!is.null(lrNoMut))
-    x[["LR*"]] = formatLR(unname(lrNoMut[markers]))
-
-  # Add signed percentage change to the masked table
-  if(!is.null(referenceLR)) {
-    deviation = rep(NA_character_, length(lr))
-    ok = is.finite(lr) & is.finite(referenceLR) & referenceLR != 0
-    deviation[ok] = sprintf("%+.1f%%", 100 * (lr[ok] / referenceLR[ok] - 1))
-    x[[ncol(x) + 1]] = deviation
-    names(x)[ncol(x)] = ""
-  }
-
-  DT::datatable(
-    x, rownames = FALSE, class = "compact stripe hover nowrap",
-    options = list(
-      dom = "t", paging = FALSE, scrollX = TRUE, ordering = FALSE,
-      scrollY = "330px", scrollCollapse = TRUE
-    ),
-    callback = DT::JS("markerDblclick(table);")
-  )
-}
-
 plotAllPeds = function(peds, removeEmpty = TRUE) {
   if(removeEmpty)
     peds = removeEmptyComps(peds)
   npeds = length(peds)
   cex = if(npeds == 1) 1.1 else 1.3
-  plotPedList(peds, hatched = typedMembers, cex = cex)
+
+  tryCatch(
+    suppressWarnings(plotPedList(peds, hatched = typedMembers, cex = cex)),
+    error = function(e) {
+      msg = conditionMessage(e)
+      if(grepl("Cannot fit the graph", msg))
+        msg = "Pedigrees do not fit.\nTry enlarging the window."
+      shiny::validate(msg, errorClass = "plot")
+    }
+  )
 }
 
 removeEmptyComps = function(x) {
@@ -211,12 +162,13 @@ renderFreqTable = function(orig, mask, map) {
     class = "compact stripe",
     options = list(
       dom = "t", paging = FALSE, ordering = TRUE,
-      scrollY = "60vh", scrollCollapse = TRUE,
+      scrollY = "55vh", scrollCollapse = TRUE,
       orderCellsTop = FALSE,
       columnDefs = list(list(
         targets = 0:3, className = "dt-center",
         render = DT::JS("sortBlanksLast")
       ))
     )
-  )
+  ) |> 
+    DT::formatStyle(1:4,  lineHeight = "98%")
 }

@@ -8,10 +8,9 @@ suppressPackageStartupMessages({
 })
 
 ui = page_sidebar(
-  tags$head(
-    tags$link(rel = "stylesheet", href = "styles.css"),
-    tags$script(src = "scripts.js")
-  ),
+  includeCSS("www/styles.css"),
+  tags$head(tags$script(src = "scripts.js")),
+  shinyjs::useShinyjs(),
   
   title = div(
     class = "app-title",
@@ -20,9 +19,12 @@ ui = page_sidebar(
       class = "app-title-text",
       div(class = "app-name", "famnesia"),
       div(class = "app-subtitle", "Anonymising Familias files")
-    )
+    ),
+    actionLink("settings", NULL, icon = icon("gear"),
+               class = "app-settings", title = "Settings")
   ),
-  theme = bs_theme(version = 5, primary = "#526f8e", navbar_bg = "#e7e5e1"),
+  theme = bs_theme(version = 5, primary = "#526f8e", 
+                   navbar_bg = "#e7e5e1"),
   fillable = FALSE,
 
   sidebar = sidebar(
@@ -48,26 +50,26 @@ ui = page_sidebar(
       div(
         class = "d-flex align-items-center gap-2",
         actionButton("presetStrong", "Strong",
-                     class = "btn-sm btn-outline-primary flex-fill"),
+                     class = "btn-sm btn-outline-primary flex-fill",
+                     title = "Preset: Maximal masking (LRs may change)"),
         actionButton("presetWeak", "Preserve LR",
-                     class = "btn-sm btn-outline-primary flex-fill text-nowrap"),
-        actionLink("settings", NULL, icon = icon("gear"),
-                   class = "text-secondary px-1 lh-1", title = "Settings")
+                     title = "Preset: Moderate masking (LRs unchanged)",
+                     class = "btn-sm btn-outline-primary flex-fill text-nowrap")
       )
     ),
-
 
     checkboxGroupInput(
       "options", "Masking options",
       choiceNames = list(
         "Family names"  |> addTip("Rename families to F1,F2,..."),
         "ID labels"     |> addTip("Rename individuals to 1,2,..."),
-        "Marker names"  |> addTip("Rename markers randomly to M1, M2, ..."),
+        "Marker names"  |> addTip("Rename markers to M1,M2,..."),
+        "Shuffle markers"  |> addTip("Permute the marker order"),
         "Lump alleles"  |> addTip("Merge unobserved alleles at each marker"),
         "Randomize sex" |> addTip("Swap sex of random (suitable) individuals")
       ),
-      choiceValues = c("famnames", "ids", "markernames", "lump", "sex"),
-      selected = c("famnames", "ids", "markernames")
+      choiceValues = c("famnames", "ids", "markernames", "shuffle", "lump", "sex"),
+      selected = c("famnames", "ids", "markernames", "shuffle")
     ),
     radioButtons("alleles", "Allele labels",
       choiceNames = list(
@@ -112,7 +114,7 @@ ui = page_sidebar(
         class = "original-heading"
       ),
       DT::DTOutput("tableOriginal", fill = FALSE),
-      plotOutput("plotOriginal", height = "320px")
+      plotOutput("plotOriginal", fill = FALSE, height = "320px")
     ),
     card(
       card_header(
@@ -122,7 +124,7 @@ ui = page_sidebar(
         class = "masked-heading"
       ),
       DT::DTOutput("tableMasked", fill = FALSE),
-      plotOutput("plotMasked", height = "320px")
+      plotOutput("plotMasked", fill = FALSE, height = "320px")
     )
   )
 )
@@ -130,10 +132,13 @@ ui = page_sidebar(
 server = function(input, output, session) {
   imported = reactiveVal(NULL)
   masked = reactiveVal(NULL)
+  
   prefs = reactiveValues(removeEmptyComps = TRUE,
                          removeEmptyMarkers = TRUE,
                          abbreviate = TRUE,
-                         noMutLR = FALSE)
+                         noMutLR = FALSE,
+                         lrDigits = 2,
+                         seed = 12345)
 
 
   # Import data ---------------------------------------------------------------------------------
@@ -162,7 +167,7 @@ server = function(input, output, session) {
 
   observeEvent(input$presetStrong, {
     updateCheckboxGroupInput(session, "options",
-      selected = c("famnames", "ids", "markernames", "lump", "sex"))
+      selected = c("famnames", "ids", "markernames", "shuffle", "lump", "sex"))
     updateRadioButtons(session, "alleles", selected = "strong")
     updateRadioButtons(session, "freqs", selected = "tweak")
     updateRadioButtons(session, "mutmodels", selected = "disable")
@@ -170,12 +175,27 @@ server = function(input, output, session) {
   
   observeEvent(input$presetWeak, {
     updateCheckboxGroupInput(session, "options",
-      selected = c("famnames", "ids", "markernames"))
+      selected = c("famnames", "ids", "markernames", "shuffle"))
     updateRadioButtons(session, "alleles", selected = "constrained")
     updateRadioButtons(session, "freqs", selected = "original")
     updateRadioButtons(session, "mutmodels", selected = "original")
   })
 
+  observe({
+    orig = req(original())
+    print(orig$mutpars[[1]])
+    stepwise = any(vapply(orig$mutpars, FUN.VALUE = logical(1),
+                          \(p) !is.null(p) && "stepwise" %in% unlist(p$model)))
+    incompatible = stepwise && "lump" %in% input$options
+  
+    shinyjs::toggleState(
+      selector = "#mutmodels label:has(input[value='original'])",
+      condition = !incompatible)
+  
+    if(incompatible && input$mutmodels == "original")
+      updateRadioButtons(session, "mutmodels", selected = "simplify")
+  })
+  
   # Apply masking -------------------------------------------------------------------------------
   
   # Working version of input: Remove empty markers if indicated
@@ -198,15 +218,19 @@ server = function(input, output, session) {
 
   # Build a fresh masked copy from the converted data
   observeEvent(input$apply, {
+    orig = req(original())
     masked(NULL)
     options = input$options
+    if(!is.null(prefs$seed)) 
+      set.seed(prefs$seed)
     
     tryCatch({
       mdat = maskData(
-        req(original()),
+        orig,
         famnames = "famnames" %in% options,
         ids = "ids" %in% options,
         markernames = "markernames" %in% options,
+        shuffle = "shuffle" %in% options,
         lump = "lump" %in% options,
         sex = "sex" %in% options,
         alleles = input$alleles,
@@ -225,7 +249,7 @@ server = function(input, output, session) {
   output$tableOriginal = DT::renderDT({
     input$apply
     x = req(original())
-    renderMarkerTable(x$peds, x$attrs, x$lr, 
+    renderMarkerTable(x$peds, x$attrs, x$lr, digits = prefs$lrDigits,
                       lrNoMut = if(prefs$noMutLR) x$lrNoMut,
                       shortNames = prefs$abbreviate)
   }, server = FALSE)
@@ -234,7 +258,7 @@ server = function(input, output, session) {
     x = req(original())
     m = req(masked())
     prefs$abbreviate # Refresh both tables together
-    renderMarkerTable(m$peds, m$attrs, m$lr,
+    renderMarkerTable(m$peds, m$attrs, m$lr, digits = prefs$lrDigits,
                       lrNoMut = if(prefs$noMutLR) m$lrNoMut,
                       referenceLR = unname(x$lr))
   }, server = FALSE)
@@ -243,27 +267,29 @@ server = function(input, output, session) {
   output$statsMasked = renderText(pedStats(req(masked())))
   
   output$lrOriginal = renderUI({
-    lr = prod(req(original())$lr)
-    tags$span(class = "lr-total",  paste("LR =", sprintf("%.3g", lr)))
+    orig = req(original())
+    LRtag(prod(orig$lr), length(orig$peds), prefs$lrDigits)
   })
-
+  
   output$lrMasked = renderUI({
-    lr0 = prod(req(original())$lr)
+    orig = req(original())
+    npeds = length(orig$peds)
+    lr0 = prod(orig$lr)
     lr = prod(req(masked())$lr)
-    
-    if(is.na(lr0) || is.na(lr)) 
-      return(tags$span(class = "lr-total", paste("LR =", sprintf("%.3g", lr))))
-    
+  
+    if(is.na(lr0) || is.na(lr) || lr == 0)
+      return(LRtag(prod(lr), npeds, prefs$lrDigits))
+  
     dev = 100 * (lr / lr0 - 1)
     cls = if(abs(dev) < 1) "lr-close" else if(abs(dev) < 5) "lr-medium" else "lr-large"
-
+  
     tags$span(
       class = "lr-summary",
-      tags$span(class = "lr-total", paste("LR =", sprintf("%.3g", lr))),
+      LRtag(prod(lr), npeds, prefs$lrDigits),
       tags$span(class = paste("lr-change", cls), sprintf("%+.1f%%", dev))
     )
   })
-
+  
   # Pedigree plots
   output$plotOriginal = renderPlot({
     plotAllPeds(req(original())$peds, removeEmpty = prefs$removeEmptyComps)
@@ -335,22 +361,18 @@ server = function(input, output, session) {
       title = tagList(icon("gear"), "Settings"),
       tags$div(
         class = "border rounded-3 bg-body-tertiary p-3 text-nowrap",
-        checkboxInput(
-          "settingRemoveEmptyComps", "Remove nonempty components in plots",
-          value = prefs$removeEmptyComps
-        ),
-        checkboxInput(
-          "settingRemoveEmptyMarkers", "Remove empty markers",
-          value = prefs$removeEmptyMarkers
-        ),
-        checkboxInput(
-          "settingAbbreviate", "Abbreviate long names (only in table)",
-          value = prefs$abbreviate
-        ),
-        checkboxInput(
-          "settingNoMutLR", "Include LRs without mutation models",
-          value = prefs$noMutLR
-        )
+        checkboxInput("settingRemoveEmptyMarkers", "Remove empty markers",
+                      value = prefs$removeEmptyMarkers),
+        checkboxInput("settingRemoveEmptyComps", "Hide empty plot components",
+                      value = prefs$removeEmptyComps),
+        checkboxInput("settingAbbreviate", "Shorten long names in table",
+                      value = prefs$abbreviate),
+        checkboxInput("settingNoMutLR", "Include LRs without mutation models",
+                      value = prefs$noMutLR),
+        numericInput("settingLRdigits", "LR decimals", min = 0, max = 6, step = 1,
+                     value = prefs$lrDigits),
+        numericInput("settingSeed", "Random seed", min = 0, step = 1, 
+                     value = prefs$seed)
       ),
       size = "m",
       easyClose = TRUE,
@@ -377,6 +399,15 @@ server = function(input, output, session) {
   observeEvent(input$settingAbbreviate, {
     if(!identical(input$settingAbbreviate, prefs$abbreviate))
       prefs$abbreviate = input$settingAbbreviate
+  })
+  
+  observeEvent(input$settingLRdigits, {
+    if(!is.na(input$settingLRdigits)) prefs$lrDigits = input$settingLRdigits
+  })
+  
+  observeEvent(input$settingSeed, {
+    s = input$settingSeed
+    prefs$seed = if(is.na(s)) NULL else s
   })
   
   observeEvent(input$settingNoMutLR, {
