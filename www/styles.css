@@ -17,7 +17,7 @@
 
 .app-logo {
   width: auto;
-  height: 52px !important;
+  height: 52px;
   flex: 0 0 auto;
 }
 
@@ -44,14 +44,6 @@
 :root {
   --original-bg: #f2e4d3;
   --masked-bg: #dcebe3;
-}
-
-.modal-dialog:has(.freq-title) .modal-content {
-  max-height: calc(100vh - 2rem);
-}
-
-.modal-dialog:has(.freq-title) .modal-body {
-  overflow-y: auto;
 }
 
 .modal-header {
@@ -127,6 +119,12 @@
 
 .lr-total sub {
   margin-left: -.2rem;
+}
+
+.table-hint {
+  position: absolute;
+  font-size: .7rem;
+  color: var(--bs-secondary-color);
 }
 
 .sidebar .shiny-input-container {

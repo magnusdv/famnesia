@@ -32,15 +32,16 @@ maskData = function(x, famnames = FALSE, ids = FALSE,
                   oldAlleles, lapply(db, names))
   mnames = names(db) |> setnames()
   
-  # Mask: Marker names
-  newMnames = if(markernames && shuffle) 
-    sample(paste0("M", seq_along(mnames)))
-  else if(markernames) 
-    paste0("M", seq_along(mnames))
-  else 
-    mnames
-  names(newMnames) = mnames
+  # Mask: marker names & order
+  newMnames = setNames(mnames, mnames)
+  ord = if(shuffle) sample(mnames) else mnames
   
+  if(markernames)
+    newMnames[ord] = paste0("M", seq_along(mnames))
+  
+  # NB: shuffling is only done in output, not in tables
+  markerOrder = if(markernames) unname(newMnames[ord]) else ord
+
   # Rebuild mut models
   mutmods = lapply(mnames, \(m)
     restoreMutmod(db[[m]], x$mutpars[[m]], method = mutmodels))
@@ -73,6 +74,7 @@ maskData = function(x, famnames = FALSE, ids = FALSE,
     peds = peds,
     attrs = attrs,
     alleleMap = alleleMap,
+    markerOrder = markerOrder,
     lr = markerLR(peds, theta = 0),
     lrNoMut = lrNoMut,
     params = maskFamParams(x$params, newids, newMnames)

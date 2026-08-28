@@ -17,7 +17,7 @@ ui = page_sidebar(
     tags$img(src = "pedlogo.svg", class = "app-logo"),
     div(
       class = "app-title-text",
-      div(class = "app-name", "famnesia"),
+      div(class = "app-name", "Famnesia"),
       div(class = "app-subtitle", "Anonymising Familias files")
     ),
     actionLink("settings", NULL, icon = icon("gear"),
@@ -123,7 +123,10 @@ ui = page_sidebar(
             uiOutput("lrMasked", inline = TRUE)),
         class = "masked-heading"
       ),
-      DT::DTOutput("tableMasked", fill = FALSE),
+      div(style = "position: relative;",
+        DT::DTOutput("tableMasked", fill = FALSE),
+        uiOutput("maskedHint")
+      ),
       plotOutput("plotMasked", fill = FALSE, height = "320px")
     )
   )
@@ -183,13 +186,12 @@ server = function(input, output, session) {
 
   observe({
     orig = req(original())
-    print(orig$mutpars[[1]])
     stepwise = any(vapply(orig$mutpars, FUN.VALUE = logical(1),
                           \(p) !is.null(p) && "stepwise" %in% unlist(p$model)))
     incompatible = stepwise && "lump" %in% input$options
   
     shinyjs::toggleState(
-      selector = "#mutmodels label:has(input[value='original'])",
+      selector = "#mutmodels input[value='original']",
       condition = !incompatible)
   
     if(incompatible && input$mutmodels == "original")
@@ -250,15 +252,15 @@ server = function(input, output, session) {
     input$apply
     x = req(original())
     renderMarkerTable(x$peds, x$attrs, x$lr, digits = prefs$lrDigits,
-                      lrNoMut = if(prefs$noMutLR) x$lrNoMut,
-                      shortNames = prefs$abbreviate)
+                      shortNames = prefs$abbreviate,
+                      lrNoMut = if(prefs$noMutLR) x$lrNoMut)
   }, server = FALSE)
 
   output$tableMasked = DT::renderDT({
     x = req(original())
     m = req(masked())
-    prefs$abbreviate # Refresh both tables together
     renderMarkerTable(m$peds, m$attrs, m$lr, digits = prefs$lrDigits,
+                      shortNames = prefs$abbreviate,
                       lrNoMut = if(prefs$noMutLR) m$lrNoMut,
                       referenceLR = unname(x$lr))
   }, server = FALSE)
@@ -277,19 +279,24 @@ server = function(input, output, session) {
     lr0 = prod(orig$lr)
     lr = prod(req(masked())$lr)
   
-    if(is.na(lr0) || is.na(lr) || lr == 0)
-      return(LRtag(prod(lr), npeds, prefs$lrDigits))
-  
+    if(!is.finite(lr0) || !is.finite(lr) || lr0 == 0)
+      return(LRtag(lr, npeds, prefs$lrDigits))
+    
     dev = 100 * (lr / lr0 - 1)
     cls = if(abs(dev) < 1) "lr-close" else if(abs(dev) < 5) "lr-medium" else "lr-large"
-  
+    
     tags$span(
       class = "lr-summary",
-      LRtag(prod(lr), npeds, prefs$lrDigits),
+      LRtag(lr, npeds, prefs$lrDigits),
       tags$span(class = paste("lr-change", cls), sprintf("%+.1f%%", dev))
     )
   })
   
+  output$maskedHint = renderUI({
+    if(is.null(masked())) return(NULL)
+    div(class = "table-hint", "Double-click a row to view alleles and frequencies.")
+  })
+    
   # Pedigree plots
   output$plotOriginal = renderPlot({
     plotAllPeds(req(original())$peds, removeEmpty = prefs$removeEmptyComps)
@@ -346,8 +353,9 @@ server = function(input, output, session) {
       famfile = tempfile(fileext = ".fam")
       on.exit(unlink(famfile), add = TRUE)
 
-      writeFam(m$peds, famfile = famfile, params = m$params, verbose = FALSE)
-
+      peds = lapply(m$peds, selectMarkers, markers = m$markerOrder)
+      writeFam(peds, famfile = famfile, params = m$params, verbose = FALSE)
+      
       if(!file.copy(famfile, file, overwrite = TRUE))
         stop("Could not prepare the download", call. = FALSE)
     }
@@ -369,7 +377,7 @@ server = function(input, output, session) {
                       value = prefs$abbreviate),
         checkboxInput("settingNoMutLR", "Include LRs without mutation models",
                       value = prefs$noMutLR),
-        numericInput("settingLRdigits", "LR decimals", min = 0, max = 6, step = 1,
+        numericInput("settingLRdigits", "LR decimals", min = 0, max = 10, step = 1,
                      value = prefs$lrDigits),
         numericInput("settingSeed", "Random seed", min = 0, step = 1, 
                      value = prefs$seed)
@@ -384,7 +392,6 @@ server = function(input, output, session) {
     value = input$settingRemoveEmptyComps
     if(!identical(value, prefs$removeEmptyComps)) {
       prefs$removeEmptyComps = value
-      masked(NULL)
     }
   })
   
@@ -402,7 +409,9 @@ server = function(input, output, session) {
   })
   
   observeEvent(input$settingLRdigits, {
-    if(!is.na(input$settingLRdigits)) prefs$lrDigits = input$settingLRdigits
+    d = input$settingLRdigits
+    if(is.finite(d)) 
+      prefs$lrDigits = max(0, min(10, round(d)))
   })
   
   observeEvent(input$settingSeed, {

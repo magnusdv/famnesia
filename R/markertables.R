@@ -62,7 +62,8 @@ renderMarkerTable = function(peds, locusAttributes, lr, digits = 2,
 
 # Marker-wise LRs
 markerLR = function(peds, theta = 0) {
-  lik = do.call(cbind, lapply(peds, pedprobr::likelihood, theta = theta))
+  peds12 = head(peds, 2)
+  lik = do.call(cbind, lapply(peds12, likelihood, theta = theta))
   lr = if(ncol(lik) < 2) rep(NA_real_, nrow(lik)) else lik[, 1] / lik[, 2]
   setnames(lr, name(peds[[1]]))
 }
