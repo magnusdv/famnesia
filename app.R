@@ -11,6 +11,7 @@ ui = page_sidebar(
   includeCSS("www/styles.css"),
   tags$head(tags$script(src = "scripts.js")),
   shinyjs::useShinyjs(),
+  useBusyIndicators(),
   
   title = div(
     class = "app-title",
