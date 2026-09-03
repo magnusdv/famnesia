@@ -49,7 +49,8 @@ renderMarkerTable = function(peds, locusAttributes, lr, digits = 2,
   }
 
   DT::datatable(
-    x, rownames = FALSE, class = "compact stripe hover nowrap",
+    x, rownames = FALSE, selection = "none", 
+    class = "compact stripe hover nowrap",
     options = list(
       dom = "t", paging = FALSE, scrollX = TRUE, ordering = FALSE,
       scrollY = "300px", scrollCollapse = TRUE

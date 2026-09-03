@@ -158,7 +158,8 @@ renderFreqTable = function(orig, mask, map) {
   )
 
   DT::datatable(
-    tab, container = header, rownames = FALSE,
+    tab, container = header, selection = "none", 
+    rownames = FALSE,
     class = "compact stripe",
     options = list(
       dom = "t", paging = FALSE, ordering = TRUE,
