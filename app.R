@@ -147,12 +147,13 @@ server = function(input, output, session) {
   # Import data ---------------------------------------------------------------------------------
   
   # Shared pipeline for upload & example
-  importFam = function(path) {
+  importFam = function(path, filename = basename(path)) {
     imported(NULL)
     masked(NULL)
   
     tryCatch({
       x = loadFamData(path)
+      x$filename = filename
       imported(x)
   
       if((x$params$theta %||% 0) > 0)
@@ -162,28 +163,84 @@ server = function(input, output, session) {
     })
   }
   
-  observeEvent(input$fileInput, importFam(req(input$fileInput$datapath)))
+  observeEvent(input$fileInput, {d = req(input$fileInput); importFam(d$datapath, d$name)})
+  
   observeEvent(input$example, importFam("data/sibship.fam"))
 
-
-  # Option presets ------------------------------------------------------------------------------
-
-  observeEvent(input$presetStrong, {
-    updateCheckboxGroupInput(session, "options",
-      selected = c("famnames", "ids", "markernames", "shuffle", "lump", "sex"))
-    updateRadioButtons(session, "alleles", selected = "strong")
-    updateRadioButtons(session, "freqs", selected = "tweak")
-    updateRadioButtons(session, "mutmodels", selected = "disable")
-  })
   
-  observeEvent(input$presetWeak, {
-    updateCheckboxGroupInput(session, "options",
-      selected = c("famnames", "ids", "markernames", "shuffle"))
-    updateRadioButtons(session, "alleles", selected = "constrained")
-    updateRadioButtons(session, "freqs", selected = "original")
-    updateRadioButtons(session, "mutmodels", selected = "original")
-  })
+  setMasking = function(choices) {
+    nms = names(choices)
+    if("options" %in% nms)
+      updateCheckboxGroupInput(session, "options", selected = choices$options)
+    if("alleles" %in% nms)
+      updateRadioButtons(session, "alleles", selected = choices$alleles)
+    if("freqs" %in% nms)
+      updateRadioButtons(session, "freqs", selected = choices$freqs)
+    if("mutmodels" %in% nms)
+      updateRadioButtons(session, "mutmodels", selected = choices$mutmodels)
+  }
 
+  # File analysis -----------------------------------------------------------------------------
+  
+  analysis = reactive(analyseFam(req(original())))
+  
+  observeEvent(input$analyse, {
+    a = analysis()
+  
+    row = function(id, label, text, effect, rec = FALSE, cls = "btn-outline-dark")
+      div(class = paste("row align-items-center px-2 py-2 border-top text-dark",
+                  if(rec) "bg-success bg-opacity-10"),
+          div(class = "col-3",
+              actionButton(id, label, width = "100%",
+                           class = paste(cls, "text-center text-nowrap px-2"))),
+          div(class = "col-7 small", text),
+          div(class = "col-2 text-center fs-3", effectSymbol(effect)))
+  
+    showModal(modalDialog(
+      title = tags$span(
+        class = "freq-title",
+        tagList(icon("magnifying-glass"), "File analysis"),
+        modalButton("Close")
+      ),
+      
+      h5("File summary"),
+      
+      div(class = "bg-light rounded-3 p-3 mb-3",
+          tags$p(class = "mb-0",
+            tags$b("File name: "), a$info$filename, tags$br(),
+            tags$b("Family names: "), paste(a$info$famnames, collapse = ", "), tags$br(),
+            tags$b("Typed indivs: "), a$info$individuals, tags$br(),
+            tags$b("Database: "), basename(a$info$database), tags$br(),
+            tags$b("Mutation models: "), a$info$mutmodel
+      )),
+      
+      tags$hr(class = "my-3"),
+      h5("Masking strategies for this file"),
+      
+      div(class = "border rounded-3 overflow-hidden mb-2",
+          tags$div(class = "row px-2 py-2 fw-semibold bg-light",
+            div(class = "col-3"),
+            div(class = "col-7", "Settings"),
+            div(class = "col-2 text-center", "LR")
+          ),
+          row("analyseMax", "Max", maskingText(a$max), "non-exact"),
+          row("analyseSuggested", "Suggested", maskingText(a$suggested), a$effect, rec = TRUE, 
+              cls = "btn-success"),
+          row("analysePreserve", "Keep LR", maskingText(a$preserve), "exact", 
+              cls = "btn-outline-primary")
+      ),
+      tags$small(class = "text-secondary", "Standard masks are included in all cases."),
+      
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+    
+  observeEvent(input$analyseMax, {setMasking(analysis()$max); removeModal()})
+  observeEvent(input$analyseSuggested, {setMasking(analysis()$suggested); removeModal()})
+  observeEvent(input$analysePreserve, {setMasking(analysis()$preserve); removeModal()})
+  
+  
   observe({
     orig = req(original())
     stepwise = any(vapply(orig$mutpars, FUN.VALUE = logical(1),
