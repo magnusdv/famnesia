@@ -94,22 +94,29 @@ setMaskedAttribs = function(x, attrs) {
 
 
 maskFreqs = function(v, method) {
-  if(method == "original")
-    return(v)
+  switch(method, 
+         original = v,
+         tweak = tweakFreqs(v, amount = 0.02), 
+         round = roundFreqs(v, sign = 2))
+}
+
+tweakFreqs = function(v, amount = 0.02) {
+  vv = v * runif(length(v), 1 - amount, 1 + amount)
+  u = vv / sum(vv)
+  roundFreqs(u, sign = 3)
+}
+
+roundFreqs = function(v, sign = NULL, dec = NULL) {
+  if(!is.null(sign))
+    vv = signif(v, sign)
+  else if(!is.null(dec))
+    vv = round(v, dec)
+  else
+    stop2("Either 'sign' or 'dec' must be specified")
   
-  switch(method,
-    tweak = {
-      vv = v * runif(length(v), 0.98, 1.02)
-      vv / sum(vv)
-   },
-    round = {
-      v[v < 0.0001] = 0.0001
-      vv = round(v, 4)
-      j = which.max(vv)
-      vv[j] = 1 - sum(vv[-j])
-      round(vv, 4)
-    }
-  )
+  j = which.max(v)
+  vv[j] = 1 - sum(vv[-j])
+  vv
 }
 
 maskAlleleLabs = function(v, method) {

@@ -172,3 +172,11 @@ renderFreqTable = function(orig, mask, map) {
   ) |> 
     DT::formatStyle(1:4,  lineHeight = "98%")
 }
+
+
+freqOccurrences = function(db, values, sign = 2) {
+  vals = unique.default(values)
+  freqs = unlist(lapply(db, roundFreqs, sign = sign), use.names = F)
+  tb = setNames(tabulate(match(freqs, vals), nbins = length(vals)), vals)
+  tb[as.character(values)]
+}
