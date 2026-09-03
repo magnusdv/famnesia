@@ -21,8 +21,9 @@ ui = page_sidebar(
       div(class = "app-name", "Famnesia"),
       div(class = "app-subtitle", "Anonymising Familias files")
     ),
-    actionLink("settings", NULL, icon = icon("gear"),
-               class = "app-settings", title = "Settings")
+    actionLink("settings",
+           tagList(icon("gear", class = "fs-3"), tags$br(), tags$small("Settings")),
+           class = "app-settings text-center text-secondary")
   ),
   theme = bs_theme(version = 5, primary = "#526f8e", 
                    navbar_bg = "#e7e5e1"),
@@ -40,25 +41,14 @@ ui = page_sidebar(
       div(
         class = "d-flex align-items-center justify-content-between fw-semibold",
         span("Familias file"),
-        actionLink("example", NULL, icon = icon("flask"),
-                   class = "text-secondary px-1 lh-1", title = "Load example")
+        actionButton("example", "EXAMPLE", class = "btn-sm example-btn")
       ),
       fileInput("fileInput", NULL, buttonLabel = icon("folder-open"),
                 accept = ".fam")
     ),
-    div(
-      #div(class = "small fw-semibold text-secondary mb-1", "Presets"),
-      div(
-        class = "d-flex align-items-center gap-2",
-        actionButton("presetStrong", "Strong",
-                     class = "btn-sm btn-outline-primary flex-fill",
-                     title = "Preset: Maximal masking (LRs may change)"),
-        actionButton("presetWeak", "Preserve LR",
-                     title = "Preset: Moderate masking (LRs unchanged)",
-                     class = "btn-sm btn-outline-primary flex-fill text-nowrap")
-      )
-    ),
-
+    actionButton("analyse", "Analyse", icon = icon("magnifying-glass"),
+             class = "btn-sm btn-outline-primary"),
+    
     checkboxGroupInput(
       "options", "Masking options",
       choiceNames = list(
@@ -134,9 +124,13 @@ ui = page_sidebar(
 )
 
 server = function(input, output, session) {
+  
+  if(interactive())
+    session$onSessionEnded(stopApp)
+  
+  # Main reactives
   imported = reactiveVal(NULL)
   masked = reactiveVal(NULL)
-  
   prefs = reactiveValues(removeEmptyComps = TRUE,
                          removeEmptyMarkers = TRUE,
                          abbreviate = TRUE,
