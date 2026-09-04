@@ -6,14 +6,12 @@
   padding: 0.1rem 0;
 }
 
-.app-settings {
-  margin-left: auto;
-  margin-right: .5rem;
+.app-header-link {
   line-height: .9;
   text-decoration: none;
 }
 
-.app-settings svg {
+.app-header-link svg {
   position: relative;
   top: .1rem;
 }

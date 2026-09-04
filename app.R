@@ -21,9 +21,13 @@ ui = page_sidebar(
       div(class = "app-name", "Famnesia"),
       div(class = "app-subtitle", "Anonymising Familias files")
     ),
-    actionLink("settings",
-           tagList(icon("gear", class = "fs-3"), tags$br(), tags$small("Settings")),
-           class = "app-settings text-center text-secondary")
+    div(class = "d-flex align-items-center gap-3 ms-auto me-2",
+      actionLink("settings",
+                 tagList(icon("gear", class = "fs-3"), tags$br(), tags$small("Settings")),
+                 class = "app-header-link text-center text-secondary"),
+      tags$a(href = "https://github.com/magnusdv/famnesia", target = "_blank",
+             tagList(icon("github", class = "fs-3"), tags$br(), tags$small("GitHub")),
+             class = "app-header-link text-center text-secondary"))
   ),
   theme = bs_theme(version = 5, primary = "#526f8e", 
                    navbar_bg = "#e7e5e1"),
