@@ -10,7 +10,8 @@ Description: A 'shiny' application for anonymising files exported from the
     modified, with options for preserving likelihood ratios exactly. The
     application is built on the 'pedsuite' packages for pedigree analysis.
 License: GPL (>= 3)
-URL: https://github.com/magnusdv/famnesia
+URL: https://magnusdv.shinyapps.io/famnesia/,
+    https://github.com/magnusdv/famnesia
 BugReports: https://github.com/magnusdv/famnesia/issues
 Depends:
     R (>= 4.4)
