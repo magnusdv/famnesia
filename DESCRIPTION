@@ -16,13 +16,13 @@ Depends:
     R (>= 4.4)
 Imports:
     DT,
-    bslib,
+    bslib (>= 0.11.0),
     htmltools,
-    pedFamilias,
+    pedFamilias (>= 0.2.0),
     pedmut,
     pedprobr,
     pedtools,
-    shiny,
+    shiny (>= 1.9.0),
     shinyjs
 Config/roxygen2/version: 8.1.0
 Encoding: UTF-8
