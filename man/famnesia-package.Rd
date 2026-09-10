@@ -11,6 +11,7 @@ A 'shiny' application for anonymising files exported from the 'Familias' softwar
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://magnusdv.shinyapps.io/famnesia/}
   \item \url{https://github.com/magnusdv/famnesia}
   \item Report bugs at \url{https://github.com/magnusdv/famnesia/issues}
 }
