@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Famnesia <img src="www/pedlogo.svg" align="right" height=106/>
+# Famnesia <img src="inst/shiny/www/pedlogo.svg" align="right" height=105/>
 
 **Try Famnesia online here:** <https://magnusdv.shinyapps.io/famnesia/>
 
@@ -19,7 +19,7 @@ instance for:
 - teaching and demonstrations
 - reproducible examples and testing
 
-## How does Famnesia work?
+## How does Famnesia mask the data?
 
 Available data maskings include:
 
@@ -32,27 +32,34 @@ Available data maskings include:
 The `Analyse file` feature offers three masking strategies adapted to
 the input data:
 
-- MAX: Maximal masking
-- SUGGESTED: Balance strong masking with near-preserved LR values
-- PRESERVE LR: The strongest masking that preserves all LRs exactly.
+- `Max`: Maximal masking
+- `Suggested`: Balance strong masking with near-preserved LR values
+- `Keep LR`: The strongest masking that preserves all LRs exactly
 
 The result can be downloaded as a new `.fam` file.
 
 ## Running locally
 
-Clone or download the repository, then run:
+To run **famnesia** locally (and offline, if needed), first install the
+R package:
 
 ``` r
-shiny::runApp()
+remotes::install_github("magnusdv/famnesia")
+```
+
+When the package is installed, the app can be started with a single R
+command:
+
+``` r
+famnesia::launchApp()
 ```
 
 ## Limitations
 
 - Files from the Familias DVI module are not yet supported.
-- Displayed LRs within Famnesia currently ignore `theta` corrections and
-  only use the first two pedigrees in file.  
-  (Both `theta` and all pedigrees are preserved in the masked output
+- Displayed LRs within Famnesia currently ignore `theta` corrections,
+  and only use the first two pedigrees in file.  
+  (But `theta`’s and all pedigrees *are* included in the masked output
   file.)
-- Some masking strategies intentionally change the LR.
-- Famnesia substantially reduces recognisable information, but does not
-  guarantee that genetic data cannot be reidentified.
+- While Famnesia substantially reduces the recognisable information, it
+  does not guarantee that genetic data cannot be reidentified.
